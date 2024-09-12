@@ -1,0 +1,64 @@
+---
+title: "p8105_hw1_ss7332"
+author: "Sean Sorek"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE,
+                      comment = NA)
+```
+
+# Problem 1
+
+```{r}
+data("penguins", package = "palmerpenguins")
+glimpse(penguins)
+```
+
+The `penguins` dataset contains measurements of bill lengths/depths and flipper lengths for individual penguins (named `bill_length_mm`, `bill_depth_mm`, and `flipper_length_mm` respectively). It also contains important metadata about each subject: weight (`body_mass_g`), sex (`sex`), and  species (`species`). Finally, it includes information about when (`year`) and where (`island`) the data was collected.
+
+```{r}
+info_to_print <- c("Rows" = nrow(penguins),
+  "Columns" = ncol(penguins),
+  "Mean Flipper Length" = mean(penguins$flipper_length_mm, na.rm = T))
+info_to_print
+```
+
+This dataset contains information about 344 penguins.
+
+```{r}
+p <-  penguins %>% ggplot(aes(bill_length_mm, flipper_length_mm, color = species)) + 
+  geom_point() + theme_bw() +
+  labs(x = "Bill Length (mm)", y = "Flipper Length (mm)",
+       title = "Flipper vs Bill Lengths in Millimeters by Species")
+ggsave("flippers_vs_bills.png", p)
+```
+
+# Problem 2
+
+```{r}
+set.seed(305)
+my_df <- tibble(
+  normal_sample = rnorm(10),
+  is_sample_positive = normal_sample > 0,
+  strings = character(10),
+  some_factors = sample(3,10, T) |> factor()
+) |> as.data.frame()
+glimpse(my_df)
+## apply performs x[,i] which subsets instead of accessing
+## easy workaround
+sapply(1:ncol(my_df), function(.x) mean(my_df[[.x]]))
+```
+
+R implements the mean S3 method for logical and numeric vectors, but not for character or factor vectors.
+
+```{r, output = F}
+as.numeric(my_df[,"is_sample_positive"])
+as.numeric(my_df[,"strings"])
+as.numeric(my_df[,"some_factors"])
+```
+
+`as.numeric` maps `TRUE/FALSE` to `1/0` for logical vectors, and returns the underlying integer values for factor values. The behavior for factor vectors in `mean` is thus likely to prevent an easy misinterpretation, as factor variables are not necessarily numeric in value, even though the R object is. There is no coercion for character vectors, likely since a character vector in R is an array of arrays in reality. Returning objects with different dimensionality would be unintuitive behavior, so R chooses to simply return NA instead. Similarly, there is no obvious interpretation for the mean of a character vector. In contrast, the mean of a logical vector does have an intuitive interpretation: the proportion of `TRUE` values.
